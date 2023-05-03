@@ -7,5 +7,5 @@ import (
 )
 
 func TransactionRouter(router *gin.Engine) {
-	router.GET("/transaction", controller.AddIncome())
+	router.GET("/transaction", controller.GetTransactions())
 }

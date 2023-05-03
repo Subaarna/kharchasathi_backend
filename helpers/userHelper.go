@@ -11,6 +11,7 @@ import (
 )
 
 var userCollection = database.OpenCollection(database.Client, "users")
+var transactionCollection = database.OpenCollection(database.Client, "transactions")
 
 func CheckEmailExists(email string) bool {
 	var user models.User

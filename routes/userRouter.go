@@ -17,6 +17,6 @@ func UserRouter(router *gin.Engine) {
 	router.POST("/users/phone", controller.SetUserPhoneNumber())
 	router.PATCH("/users/password", controller.ChangeUserPassword())
 	router.PATCH("/users/currency", controller.ChangeInitialCurrency())
-	router.PATCH("/users/balance", controller.ChangeInitialBalance())
+
 	router.PATCH("/users/income", controller.AddIncome())
 }

@@ -16,6 +16,7 @@ import (
 )
 
 var userCollection = database.OpenCollection(database.Client, "users")
+var transactionCollection = database.OpenCollection(database.Client, "transactions")
 
 func GetUsers() gin.HandlerFunc {
 
@@ -383,45 +384,7 @@ func ChangeInitialCurrency() gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{"message": "Initial Currency updated successfully"})
 	}
 }
-func ChangeInitialBalance() gin.HandlerFunc {
 
-	return func(c *gin.Context) {
-
-		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-		defer cancel()
-
-		id := helper.GetIdFromAccessToken(c)
-		var changeInitialBalance models.ChangeInitialBalance
-		if err := c.BindJSON(&changeInitialBalance); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		// Convert the id to an ObjectId
-		objId, err := primitive.ObjectIDFromHex(id)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
-			return
-		}
-
-		// Get the user with the given id
-		var user models.User
-		err = userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-			return
-		}
-		// Update the user with the given id
-		_, err = userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": bson.M{"balance": changeInitialBalance.InitialBalance}})
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Initial balance updated successfully"})
-	}
-}
 func AddIncome() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
@@ -452,13 +415,71 @@ func AddIncome() gin.HandlerFunc {
 		// Add the income to the user's balance
 		user.Balance += income.Amount
 
+		// Create a new transaction object
+		transaction := models.Transaction{
+			ID:          primitive.NewObjectID(),
+			Type:        "income",
+			Amount:      float64(income.Amount),
+			Date:        time.Now(),
+			Description: income.Description,
+		}
+
+		// Insert the transaction into the database
+		_, err = transactionCollection.InsertOne(ctx, transaction)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert transaction"})
+			return
+		}
+
 		// Update the user in the database
 		_, err = userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": bson.M{"balance": user.Balance}})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 			return
 		}
+
 		c.JSON(http.StatusOK, gin.H{"message": "Income added successfully"})
+	}
+}
+
+func GetTransactions() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		id := helper.GetIdFromAccessToken(c)
+
+		// Convert the id to an ObjectId
+		objId, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		// Get all transactions for the user with the given id
+		var transactions []models.Transaction
+		cursor, err := transactionCollection.Find(ctx, bson.M{"userId": objId})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve transactions"})
+			return
+		}
+		defer cursor.Close(ctx)
+		for cursor.Next(ctx) {
+			var transaction models.Transaction
+			err = cursor.Decode(&transaction)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode transaction"})
+				return
+			}
+			transactions = append(transactions, transaction)
+		}
+		if err := cursor.Err(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve transactions"})
+			return
+		}
+
+		// Return the transactions in the HTTP response
+		c.JSON(http.StatusOK, transactions)
 	}
 }
 
