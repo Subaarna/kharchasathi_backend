@@ -458,7 +458,6 @@ func AddIncome() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 			return
 		}
-
 		c.JSON(http.StatusOK, gin.H{"message": "Income added successfully"})
 	}
 }

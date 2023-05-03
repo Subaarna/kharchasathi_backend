@@ -26,6 +26,7 @@ func main() {
 	}))
 
 	routes.UserRouter(router)
+	routes.TransactionRouter(router)
 
 	router.GET("/", func(c *gin.Context) {
 		c.String(200, "Server Running. Listening on port "+port)
