@@ -353,8 +353,8 @@ func ChangeInitialCurrency() gin.HandlerFunc {
 		defer cancel()
 
 		id := helper.GetIdFromAccessToken(c)
-		var changeInitialCurrency models.ChangeInitialCurrency
-		if err := c.BindJSON(&changeInitialCurrency); err != nil {
+		var currency models.User
+		if err := c.BindJSON(&currency); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -374,7 +374,7 @@ func ChangeInitialCurrency() gin.HandlerFunc {
 			return
 		}
 		// Update the user with the given id
-		_, err = userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": bson.M{"initialcurrency": changeInitialCurrency.InitialCurrency}})
+		_, err = userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": bson.M{"initialcurrency": currency.Currency}})
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
