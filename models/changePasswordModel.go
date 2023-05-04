@@ -7,6 +7,3 @@ type ChangePassword struct {
 type ChangeInitialCurrency struct {
 	InitialCurrency string `json:"initialCurrency" validate:"required"`
 }
-type ChangeInitialBalance struct {
-	InitialBalance string `json:"initialBalance" validate:"required"`
-}
