@@ -6,11 +6,8 @@ import (
 
 type User struct {
 	ID          primitive.ObjectID `bson:"_id, omitempty"`
-	FirstName   string             `json:"firstName" validate:"required, min=3, max=30"`
-	LastName    string             `json:"lastName" validate:"required, min=3, max=30"`
 	Email       string             `json:"email" validate:"required, email"`
 	Password    string             `json:"password" validate:"required, min=8, max=30"`
-	PhoneNumber string             `json:"phoneNumber" validate:"omitempty, min=10, max=10"`
 	Description string             `json:"description" validate:"omitempty, min=10, max=1000"`
 	Currency    string             `json:"initialCurrency" validate:"required"`
 	Balance     int                `json:"balance" validate:"omitempty"`

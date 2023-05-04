@@ -84,95 +84,6 @@ func GetUserById() gin.HandlerFunc {
 	}
 }
 
-func SetUserPhoneNumber() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-		defer cancel()
-
-		id := helper.GetIdFromAccessToken(c)
-
-		// Convert the id to an ObjectId
-		objId, err := primitive.ObjectIDFromHex(id)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
-			return
-		}
-
-		// Create a new User object and bind the request body to it
-		var user models.User
-		err = c.BindJSON(&user)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		// Check if any other user has the same phone number
-		var existingUser models.User
-		err = userCollection.FindOne(ctx, bson.M{"phonenumber": user.PhoneNumber}).Decode(&existingUser)
-		if err == nil && existingUser.ID != objId {
-			// Remove the phone number from the existing user
-			_, err = userCollection.UpdateOne(ctx, bson.M{"_id": existingUser.ID}, bson.M{"$unset": bson.M{"phonenumber": 1}})
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-		}
-
-		// Update the user with the given id
-		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": bson.M{"phonenumber": user.PhoneNumber}})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		if result.MatchedCount == 0 {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"message": "Phone number updated successfully"})
-	}
-}
-
-func UpdateUser() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Check if the user is authenticated
-		if !helper.IsAuthenticated(c) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "You are not authorized to access this resource"})
-			return
-		}
-
-		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-		defer cancel()
-
-		// Get the id from the request params
-		id := c.Param("id")
-
-		// Convert the id to an ObjectId
-		objId, err := primitive.ObjectIDFromHex(id)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
-			return
-		}
-
-		// Create a new User object and bind the request body to it
-		var user models.User
-		err = c.BindJSON(&user)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		// Update the user with the given id
-		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": user})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
-			return
-		}
-
-		c.JSON(http.StatusOK, result)
-
-	}
-}
-
 func DeleteUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Check if the user is authenticated
@@ -335,10 +246,7 @@ func Login() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{
 			"message":      "User logged in successfully",
-			"firstName":    existingUser.FirstName,
-			"lastName":     existingUser.LastName,
 			"email":        existingUser.Email,
-			"phoneNumber":  existingUser.PhoneNumber,
 			"accessToken":  accessToken,
 			"refreshToken": refreshToken,
 		})
@@ -468,7 +376,13 @@ func AddExpense() gin.HandlerFunc {
 			return
 		}
 
-		// Add the income to the user's balance
+		// Check if user has sufficient balance
+		if user.Balance < expense.Amount {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient balance"})
+			return
+		}
+
+		// Subtract the expense from the user's balance
 		user.Balance -= expense.Amount
 
 		// Create a new transaction object
@@ -497,6 +411,7 @@ func AddExpense() gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{"message": "Expense added successfully"})
 	}
 }
+
 func GetTransactions() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
@@ -595,10 +510,7 @@ func LoginWithGoogle() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{
 			"message":      "User logged in successfully",
-			"firstName":    user.FirstName,
-			"lastName":     user.LastName,
 			"email":        user.Email,
-			"phoneNumber":  user.PhoneNumber,
 			"accessToken":  accessToken,
 			"refreshToken": refreshToken,
 		})
