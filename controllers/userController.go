@@ -326,6 +326,7 @@ func AddIncome() gin.HandlerFunc {
 		// Create a new transaction object
 		transaction := models.Transaction{
 			ID:          primitive.NewObjectID(),
+			UserID:      objId,
 			Type:        "income",
 			Amount:      float64(income.Amount),
 			Date:        time.Now(),
@@ -346,7 +347,8 @@ func AddIncome() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Income added successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Income added successfully",
+			"balance": user.Balance})
 	}
 }
 func AddExpense() gin.HandlerFunc {
@@ -388,6 +390,7 @@ func AddExpense() gin.HandlerFunc {
 		// Create a new transaction object
 		transaction := models.Transaction{
 			ID:          primitive.NewObjectID(),
+			UserID:      objId,
 			Type:        "expense",
 			Amount:      float64(expense.Amount),
 			Date:        time.Now(),
@@ -408,7 +411,7 @@ func AddExpense() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Expense added successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Expense added successfully", "balance": user.Balance})
 	}
 }
 
@@ -428,7 +431,7 @@ func GetTransactions() gin.HandlerFunc {
 
 		// Get all transactions for the user with the given id
 		var transactions []models.Transaction
-		cursor, err := transactionCollection.Find(ctx, bson.M{"userId": objId})
+		cursor, err := transactionCollection.Find(ctx, bson.M{"userID": objId})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve transactions"})
 			return
