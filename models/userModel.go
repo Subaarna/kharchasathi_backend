@@ -12,6 +12,7 @@ type User struct {
 	Password    string             `json:"password" validate:"required, min=8, max=30"`
 	PhoneNumber string             `json:"phoneNumber" validate:"omitempty, min=10, max=10"`
 	Description string             `json:"description" validate:"omitempty, min=10, max=1000"`
+	Currency    string             `json:"currency" validate:"omitempty, min=10, max=1000"`
 	Balance     int                `json:"balance" validate:"omitempty"`
 }
 

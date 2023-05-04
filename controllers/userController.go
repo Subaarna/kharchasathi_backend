@@ -534,7 +534,19 @@ func GetTransactions() gin.HandlerFunc {
 		}
 
 		// Return the transactions in the HTTP response
-		c.JSON(http.StatusOK, transactions)
+		response := make([]gin.H, len(transactions))
+		for i, transaction := range transactions {
+			response[i] = gin.H{
+				"type":        transaction.Type,
+				"amount":      transaction.Amount,
+				"date":        transaction.Date,
+				"description": transaction.Description,
+			}
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message":      "transactions",
+			"transactions": response,
+		})
 	}
 }
 
