@@ -5,12 +5,11 @@ import (
 )
 
 type User struct {
-	ID          primitive.ObjectID `bson:"_id, omitempty"`
-	Email       string             `json:"email" validate:"required, email"`
-	Password    string             `json:"password" validate:"required, min=8, max=30"`
-	Description string             `json:"description" validate:"omitempty, min=10, max=1000"`
-	Currency    string             `json:"initialCurrency" validate:"required"`
-	Balance     int                `json:"balance" validate:"omitempty"`
+	ID       primitive.ObjectID `bson:"_id, omitempty"`
+	Email    string             `json:"email" validate:"required, email"`
+	Password string             `json:"password" validate:"required, min=8, max=30"`
+	Currency string             `json:"initialCurrency" validate:"required"`
+	Balance  int                `json:"balance" validate:"omitempty"`
 }
 
 type UserLogin struct {

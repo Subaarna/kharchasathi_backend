@@ -378,12 +378,6 @@ func AddExpense() gin.HandlerFunc {
 			return
 		}
 
-		// Check if user has sufficient balance
-		if user.Balance < expense.Amount {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient balance"})
-			return
-		}
-
 		// Subtract the expense from the user's balance
 		user.Balance -= expense.Amount
 
