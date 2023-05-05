@@ -467,6 +467,54 @@ func GetTransactions() gin.HandlerFunc {
 		})
 	}
 }
+func GetTotalIncomeAndExpense() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		id := helper.GetIdFromAccessToken(c)
+
+		// Convert the id to an ObjectId
+		objId, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		// Get all transactions for the user with the given id
+		var transactions []models.Transaction
+		cursor, err := transactionCollection.Find(ctx, bson.M{"userID": objId})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve transactions"})
+			return
+		}
+		defer cursor.Close(ctx)
+		for cursor.Next(ctx) {
+			var transaction models.Transaction
+			err = cursor.Decode(&transaction)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode transaction"})
+				return
+			}
+			transactions = append(transactions, transaction)
+		}
+
+		// Calculate the total income and expense
+		var incomeTotal, expenseTotal float64
+		for _, transaction := range transactions {
+			if transaction.Type == "income" {
+				incomeTotal += transaction.Amount
+			} else if transaction.Type == "expense" {
+				expenseTotal += transaction.Amount
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"income":  incomeTotal,
+			"expense": expenseTotal,
+		})
+	}
+}
 
 func LoginWithGoogle() gin.HandlerFunc {
 	return func(c *gin.Context) {
