@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sort"
+
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"kharchasathi.com/database"
 	helper "kharchasathi.com/helpers"
 	"kharchasathi.com/models"
@@ -450,9 +451,22 @@ func GetTransactions() gin.HandlerFunc {
 			return
 		}
 
+		// Get the search term from the query parameter
+		searchTerm := c.Query("search")
+
+		// Define query parameters for filtering and sorting transactions
+		query := bson.M{"userID": objId}
+		sortBy := bson.M{"date": -1} // sort by date in descending order
+
+		// Apply filters based on query parameters
+		if searchTerm != "" {
+			regex := primitive.Regex{Pattern: searchTerm, Options: "i"} // case-insensitive regex search
+			query["description"] = regex
+		}
+
 		// Get all transactions for the user with the given id
 		var transactions []models.Transaction
-		cursor, err := transactionCollection.Find(ctx, bson.M{"userID": objId})
+		cursor, err := transactionCollection.Find(ctx, query, options.Find().SetSort(sortBy))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve transactions"})
 			return
@@ -472,11 +486,6 @@ func GetTransactions() gin.HandlerFunc {
 			return
 		}
 
-		// Sort transactions by the latest date
-		sort.Slice(transactions, func(i, j int) bool {
-			return transactions[i].Date.After(transactions[j].Date)
-		})
-
 		// Return the transactions in the HTTP response
 		response := make([]gin.H, len(transactions))
 		for i, transaction := range transactions {
@@ -493,7 +502,6 @@ func GetTransactions() gin.HandlerFunc {
 		})
 	}
 }
-
 func GetTotalIncomeAndExpense() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
