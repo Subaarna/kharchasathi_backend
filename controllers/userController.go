@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -445,6 +446,11 @@ func GetTransactions() gin.HandlerFunc {
 			return
 		}
 
+		// Sort transactions by the latest date
+		sort.Slice(transactions, func(i, j int) bool {
+			return transactions[i].Date.After(transactions[j].Date)
+		})
+
 		// Return the transactions in the HTTP response
 		response := make([]gin.H, len(transactions))
 		for i, transaction := range transactions {
@@ -461,6 +467,7 @@ func GetTransactions() gin.HandlerFunc {
 		})
 	}
 }
+
 func GetTotalIncomeAndExpense() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
