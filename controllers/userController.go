@@ -595,10 +595,12 @@ func LoginWithGoogle() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"message":      "User logged in successfully",
-			"email":        user.Email,
-			"accessToken":  accessToken,
-			"refreshToken": refreshToken,
+			"message":         "User logged in successfully",
+			"email":           user.Email,
+			"initialCurrency": user.Currency,
+			"balance":         user.Balance,
+			"accessToken":     accessToken,
+			"refreshToken":    refreshToken,
 		})
 	}
 }
