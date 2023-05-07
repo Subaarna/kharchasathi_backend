@@ -247,10 +247,12 @@ func Login() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"message":      "User logged in successfully",
-			"email":        existingUser.Email,
-			"accessToken":  accessToken,
-			"refreshToken": refreshToken,
+			"message":         "User logged in successfully",
+			"email":           existingUser.Email,
+			"initialCurrency": existingUser.Currency,
+			"balance":         existingUser.Balance,
+			"accessToken":     accessToken,
+			"refreshToken":    refreshToken,
 		})
 	}
 }
