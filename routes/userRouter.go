@@ -17,7 +17,7 @@ func UserRouter(router *gin.Engine) {
 	router.PATCH("/users/currency", controller.ChangeInitialCurrency())
 	router.PATCH("/users/income", controller.AddIncome())
 	router.PATCH("/users/expense", controller.AddExpense())
-	router.GET("users/balance", controller.AddIncome())
+	router.GET("users/balance", controller.GetBalance())
 	router.GET("users/Total", controller.GetTotalIncomeAndExpense())
 
 }

@@ -352,6 +352,32 @@ func AddIncome() gin.HandlerFunc {
 			"balance": user.Balance})
 	}
 }
+func GetBalance() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		id := helper.GetIdFromAccessToken(c)
+
+		// Convert the id to an ObjectId
+		objId, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		// Get the user with the given id
+		var user models.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"balance": user.Balance})
+	}
+}
+
 func AddExpense() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
