@@ -332,7 +332,7 @@ func AddIncome() gin.HandlerFunc {
 		transaction := models.Transaction{
 			ID:          primitive.NewObjectID(),
 			UserID:      objId,
-			Type:        "income",
+			Type:        "Income",
 			Amount:      float64(income.Amount),
 			Date:        time.Now(),
 			Description: income.Description,
@@ -416,7 +416,7 @@ func AddExpense() gin.HandlerFunc {
 		transaction := models.Transaction{
 			ID:          primitive.NewObjectID(),
 			UserID:      objId,
-			Type:        "expense",
+			Type:        "Expense",
 			Amount:      float64(expense.Amount),
 			Date:        time.Now(),
 			Description: expense.Description,
